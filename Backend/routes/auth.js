@@ -1,0 +1,74 @@
+import express from 'express';
+import bcrypt from 'bcryptjs';
+import User from '../models/User.js';
+
+const router = express.Router();
+
+// Register Route
+router.post('/register', async (req, res) => {
+    try {
+        const { fullName, email, password } = req.body;
+
+        // Check if user already exists
+        const existingUser = await User.findOne({ email });
+        if (existingUser) {
+            return res.status(400).json({ message: 'User already exists with this email' });
+        }
+
+        // Password will be automatically hashed by the pre-save hook in User model
+        const newUser = new User({
+            fullName,
+            email,
+            password,
+            role: 'user'
+        });
+
+        await newUser.save();
+        res.status(201).json({ message: 'User registered successfully', user: { fullName, email, role: 'user' } });
+    } catch (error) {
+        res.status(500).json({ message: 'Server error during registration', error: error.message });
+    }
+});
+
+// Login Route
+router.post('/login', async (req, res) => {
+    try {
+        const { email, password } = req.body;
+
+        const user = await User.findOne({ email });
+
+        if (!user) {
+            return res.status(404).json({ message: 'User not found. Please create an account first.' });
+        }
+
+        // Securely compare entered password against the hashed password stored in MongoDB
+        const isMatch = await bcrypt.compare(password, user.password);
+        if (!isMatch) {
+            return res.status(401).json({ message: 'Invalid credentials' });
+        }
+
+        res.status(200).json({
+            message: 'Login successful',
+            user: {
+                fullName: user.fullName,
+                email: user.email,
+                role: user.role
+            }
+        });
+    } catch (error) {
+        res.status(500).json({ message: 'Server error during login', error: error.message });
+    }
+});
+
+// Get all users route (Admin use)
+router.get('/users', async (req, res) => {
+    try {
+        const users = await User.find({}, { password: 0 }); // exclude password from response
+        res.status(200).json(users);
+    } catch (error) {
+        res.status(500).json({ message: 'Error fetching users', error: error.message });
+    }
+});
+
+export default router;
+

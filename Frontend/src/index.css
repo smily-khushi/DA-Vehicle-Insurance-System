@@ -1,0 +1,157 @@
+/* CSS Reset and Normalization */
+html {
+  color-scheme: dark;
+  background-color: #0f0e16 !important;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+:root {
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+  color: #e2e8f0;
+  background-color: #0f0e16;
+  scroll-behavior: smooth;
+
+  /* Global Glass Utility */
+  --glass-bg: rgba(255, 255, 255, 0.04);
+  --glass-border: rgba(255, 255, 255, 0.08);
+  --glass-blur: 12px;
+}
+
+body {
+  min-height: 100vh;
+  width: 100%;
+  overflow-x: hidden;
+  background-color: #0f0e16 !important;
+  color: #e2e8f0;
+}
+
+/* Scrollbar Customization for Chrome/Edge/Safari */
+::-webkit-scrollbar {
+  width: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: #0f0e16;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 5px;
+  border: 2px solid #0f0e16;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+/* Chromium-Specific Glass Normalization (Scoped to User-Side) */
+.user-app-scope .glass-panel,
+.user-app-scope .card,
+.user-app-scope [class*="glass-"],
+.user-app-scope [style*="backdrop-filter"] {
+  background: var(--glass-bg) !important;
+  border: 1px solid var(--glass-border) !important;
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(180%) !important;
+  backdrop-filter: blur(var(--glass-blur)) saturate(180%) !important;
+  color: #e2e8f0 !important;
+  position: relative;
+  z-index: 1;
+  /* Force rendering layer in Chrome */
+}
+
+.user-app-scope .card-body,
+.user-app-scope .card-header {
+  background: transparent !important;
+  border-color: var(--glass-border) !important;
+}
+
+/* Normalizing Subtle Backgrounds for Dark Theme (Scoped) */
+.user-app-scope .bg-light,
+.user-app-scope .bg-primary-subtle,
+.user-app-scope .bg-success-subtle,
+.user-app-scope .bg-info-subtle,
+.user-app-scope .bg-danger-subtle {
+  background-color: rgba(255, 255, 255, 0.04) !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+}
+
+/* Text Normalization (Scoped) */
+.user-app-scope .text-dark {
+  color: #f8fafc !important;
+}
+
+.user-app-scope .text-muted,
+.user-app-scope .text-secondary {
+  color: rgba(255, 255, 255, 0.5) !important;
+}
+
+/* Chromium-Specific Text Gradient Normalization (Scoped) */
+.user-app-scope .text-gradient,
+.user-app-scope [class*="gradient-text"],
+.user-app-scope [style*="background-clip: text"] {
+  display: inline-block;
+  background-clip: text !important;
+  -webkit-background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
+  color: transparent !important;
+}
+
+/* Global Dark Mode Input Styling */
+input::placeholder,
+textarea::placeholder,
+.form-control::placeholder {
+  color: rgba(255, 255, 255, 0.45) !important;
+  opacity: 1;
+}
+
+.user-app-scope .form-control {
+  background-color: rgba(255, 255, 255, 0.04) !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  color: #fff !important;
+  -webkit-transform: translateZ(0);
+  /* Chrome layering fix */
+  transform: translateZ(0);
+}
+
+.user-app-scope .form-label {
+  color: rgba(255, 255, 255, 0.7) !important;
+}
+
+/* Form focus consistency (Chrome vs Edge) */
+input:focus,
+select:focus,
+textarea:focus,
+button:focus {
+  outline: 2px solid rgba(99, 102, 241, 0.4) !important;
+  outline-offset: 1px;
+  box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1) !important;
+}
+
+/* Remove Chrome default outlines */
+:focus:not(:focus-visible) {
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+/* Ensure images don't overflow */
+img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+}
+
+/* Prevent text selection on buttons */
+button {
+  user-select: none;
+  -webkit-user-select: none;
+}

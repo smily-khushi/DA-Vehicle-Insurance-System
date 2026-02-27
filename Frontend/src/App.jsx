@@ -48,7 +48,7 @@ function AppContent({ user, darkMode, toggleDarkMode, isSiteDown, toggleSiteStat
           <Route path="/" element={<div className="user-app-scope"><Home /></div>} />
           <Route path="/dashboard" element={
             <ProtectedRoute roleRequired="user" userRole={userRole}>
-              <div className="user-app-scope"><Dashboard /></div>
+              <div className="user-app-scope"><Dashboard user={user} /></div>
             </ProtectedRoute>
           } />
           <Route path="/login" element={<div className="user-app-scope"><Login onLogin={handleLogin} isSiteDown={isSiteDown} /></div>} />

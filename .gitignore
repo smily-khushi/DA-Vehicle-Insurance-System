@@ -49,6 +49,8 @@ Thumbs.db
 # Uploads folder (optional - if you want to exclude user uploads)
 Backend/uploads/*
 !Backend/uploads/.gitkeep
+Pdfs_Data/*
+!Pdfs_Data/.gitkeep
 
 # Cache
 .cache/

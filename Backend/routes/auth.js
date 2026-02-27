@@ -60,6 +60,39 @@ router.post('/login', async (req, res) => {
     }
 });
 
+// Update User Profile
+router.put('/profile', async (req, res) => {
+    try {
+        const { email, fullName, password } = req.body;
+
+        const user = await User.findOne({ email });
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        if (fullName) user.fullName = fullName;
+        
+        if (password) {
+            // Salt and hash the new password
+            const salt = await bcrypt.genSalt(10);
+            user.password = await bcrypt.hash(password, salt);
+        }
+
+        await user.save();
+
+        res.status(200).json({
+            message: 'Profile updated successfully',
+            user: {
+                fullName: user.fullName,
+                email: user.email,
+                role: user.role
+            }
+        });
+    } catch (error) {
+        res.status(500).json({ message: 'Error updating profile', error: error.message });
+    }
+});
+
 // Get all users route (Admin use)
 router.get('/users', async (req, res) => {
     try {

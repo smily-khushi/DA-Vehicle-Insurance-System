@@ -3,13 +3,18 @@ import Claim from '../models/Claim.js';
 
 import multer from 'multer';
 import path from 'path';
+import fs from 'fs';
 
 const router = express.Router();
 
 // Multer Config
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
-        cb(null, 'uploads/');
+        const dir = path.join(process.cwd(), '../Pdfs_Data/');
+        if (!fs.existsSync(dir)) {
+            fs.mkdirSync(dir, { recursive: true });
+        }
+        cb(null, dir);
     },
     filename: (req, file, cb) => {
         cb(null, Date.now() + path.extname(file.originalname));
@@ -34,6 +39,16 @@ const upload = multer({
 router.get('/', async (req, res) => {
     try {
         const claims = await Claim.find().sort({ createdAt: -1 });
+        res.json(claims);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+});
+
+// GET claims for a specific user
+router.get('/user/:email', async (req, res) => {
+    try {
+        const claims = await Claim.find({ userEmail: req.params.email }).sort({ createdAt: -1 });
         res.json(claims);
     } catch (error) {
         res.status(500).json({ message: error.message });

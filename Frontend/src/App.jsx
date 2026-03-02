@@ -1,19 +1,20 @@
 import { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Link, Navigate, useLocation } from 'react-router-dom';
 import MyNavbar from './components/MyNavbar';
-import Home from './pages/Home';
-import Dashboard from './pages/Dashboard';
-import Login from './pages/Login';
-import ClaimStatus from './pages/ClaimStatus';
-import About from './pages/About';
-import Contact from './pages/Contact';
-import VehicleInsurance from './pages/VehicleInsurance';
-import AdminDashboard from './pages/Admin/AdminDashboard';
-import AdminClaimsList from './pages/Admin/AdminClaimsList';
-import AdminClaimDetails from './pages/Admin/AdminClaimDetails';
-import AdminUsers from './pages/Admin/AdminUsers';
-import AdminPolicy from './pages/Admin/AdminPolicy';
-import Maintenance from './pages/Maintenance';
+import Home from './pages_new/Home';
+import Dashboard from './pages_new/Dashboard';
+import Login from './pages_new/Login';
+import ClaimStatus from './pages_new/ClaimStatus';
+import About from './pages_new/About';
+import Contact from './pages_new/Contact';
+import VehicleInsurance from './pages_new/VehicleInsurance';
+import AdminDashboard from './pages_new/Admin/AdminDashboard';
+import AdminClaimsList from './pages_new/Admin/AdminClaimsList';
+import AdminClaimDetails from './pages_new/Admin/AdminClaimDetails';
+import AdminUsers from './pages_new/Admin/AdminUsers';
+import AdminPolicy from './pages_new/Admin/AdminPolicy';
+import AdminSettings from './pages_new/Admin/AdminSettings';
+import Maintenance from './pages_new/Maintenance';
 import './App.css';
 
 // Protected Route Component
@@ -81,6 +82,11 @@ function AppContent({ user, darkMode, toggleDarkMode, isSiteDown, toggleSiteStat
           <Route path="/admin/policies" element={
             <ProtectedRoute roleRequired="admin" userRole={userRole}>
               <AdminPolicy onLogout={handleLogout} />
+            </ProtectedRoute>
+          } />
+          <Route path="/admin/settings" element={
+            <ProtectedRoute roleRequired="admin" userRole={userRole}>
+              <AdminSettings onLogout={handleLogout} />
             </ProtectedRoute>
           } />
         </Routes>

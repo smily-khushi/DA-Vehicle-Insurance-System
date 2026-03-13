@@ -270,14 +270,6 @@ Contributions are welcome! To contribute:
 4. Push to the branch (`git push origin feature/AmazingFeature`)
 5. Open a Pull Request
 
----
-
-## 📄 License
-
-This project is licensed under the MIT License - see the LICENSE file for details.
-
----
-
 ## 🐛 Known Issues & Future Improvements
 
 ### Current Limitations
@@ -292,23 +284,6 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 - 🔔 SMS and push notifications
 - 📊 Advanced analytics for admins
 - 🤖 AI-based claim assessment
-
----
-
-## 📧 Support & Contact
-
-For support, issues, or suggestions:
-- 📧 Email: support@safedrive.com
-- 🐛 GitHub Issues: [Create an Issue](https://github.com/YOUR-USERNAME/DA-Vehicle-Insurance-System/issues)
-- 💬 Contact Form: Available on the website
-
----
-
-## 👨‍💻 Author
-
-**Your Name**
-- GitHub: [@YOUR-USERNAME](https://github.com/YOUR-USERNAME)
-- Email: your.email@example.com
 
 ---
 

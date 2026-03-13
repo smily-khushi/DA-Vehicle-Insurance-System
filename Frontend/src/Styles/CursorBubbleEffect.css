@@ -1,0 +1,46 @@
+.cursor-dot {
+    width: 8px;
+    height: 8px;
+    background: #fff;
+    border-radius: 50%;
+    margin: -4px 0 0 -4px;
+    box-shadow: 0 0 10px rgba(255, 255, 255, 0.8);
+    will-change: transform;
+    pointer-events: none;
+    z-index: 100000;
+}
+
+.cursor-ring {
+    width: 36px;
+    height: 36px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-radius: 50%;
+    margin: -18px 0 0 -18px;
+    box-shadow: 0 0 15px rgba(255, 255, 255, 0.1);
+    transition: width 0.3s ease, height 0.3s ease, border-color 0.3s ease;
+    will-change: transform;
+    pointer-events: none;
+    z-index: 99999;
+}
+
+.click-spark {
+    position: absolute;
+    transform: translate(-50%, -50%);
+    border-radius: 50%;
+    opacity: 1;
+    animation: spark-out var(--duration) ease-out forwards;
+    pointer-events: none;
+    z-index: 99998;
+}
+
+@keyframes spark-out {
+    0% {
+        transform: translate(-50%, -50%) scale(1);
+        opacity: 1;
+    }
+
+    100% {
+        transform: translate(calc(-50% + var(--drift-x)), calc(-50% + var(--drift-y))) scale(0);
+        opacity: 0;
+    }
+}

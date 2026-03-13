@@ -75,7 +75,13 @@ const Login = ({ onLogin, isSiteDown }) => {
                 }
 
                 onLogin(data.user);
-                navigate(data.user.role === 'admin' ? '/admin' : '/dashboard');
+                if (data.user.role === 'admin') {
+                    navigate('/admin');
+                } else if (data.user.role === 'officer') {
+                    navigate('/officer');
+                } else {
+                    navigate('/dashboard');
+                }
             } else {
                 setMessage({ type: 'danger', text: data.message });
             }

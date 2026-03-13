@@ -174,8 +174,8 @@ const AdminUsers = ({ onLogout }) => {
                                                 <td className="py-3 bg-transparent" style={{ color: '#f8fafc' }}>{user.fullName}</td>
                                                 <td className="py-3 bg-transparent" style={{ color: 'rgba(255, 255, 255, 0.8)', fontSize: 'small' }}>{user.email}</td>
                                                 <td className="py-3 bg-transparent">
-                                                    <Badge bg={user.role === 'admin' ? 'danger-subtle' : (user.role === 'officer' ? 'warning-subtle' : 'info-subtle')}
-                                                        className={`text-${user.role === 'admin' ? 'danger' : (user.role === 'officer' ? 'warning' : 'info')} rounded-pill px-3`}>
+                                                    <Badge bg={user.role === 'admin' ? 'danger-subtle' : (user.role === 'officer' ? 'warning-subtle' : user.role === 'surveyor' ? 'success-subtle' : 'info-subtle')}
+                                                        className={`text-${user.role === 'admin' ? 'danger' : (user.role === 'officer' ? 'warning' : user.role === 'surveyor' ? 'success' : 'info')} rounded-pill px-3`}>
                                                         {user.role}
                                                     </Badge>
                                                 </td>
@@ -218,25 +218,25 @@ const AdminUsers = ({ onLogout }) => {
                                     </Card.Header>
                                     <Card.Body className="p-4">
                                         <div className="mb-2">
-                                            <p style={{ color: 'rgba(255, 255, 255, 0.6)', fontSize: 'x-small', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '2px' }}>Vehicle</p>
+                                            <p style={{ color: 'rgba(255, 255, 255, 0.6)', fontSize: 'x-small', textTransform: 'uppercase', letterSpacing: '0.5px', margin: '0 0 2px 0' }}>Vehicle</p>
                                             <p className="fw-bold mb-0" style={{ color: '#f8fafc', fontSize: 'small' }}>{ins.vehicle}</p>
                                         </div>
                                         <div className="mb-2">
-                                            <p style={{ color: 'rgba(255, 255, 255, 0.6)', fontSize: 'x-small', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '2px' }}>Policy Type</p>
+                                            <p style={{ color: 'rgba(255, 255, 255, 0.6)', fontSize: 'x-small', textTransform: 'uppercase', letterSpacing: '0.5px', margin: '0 0 2px 0' }}>Policy Type</p>
                                             <p className="fw-bold mb-0" style={{ color: '#f8fafc', fontSize: 'small' }}>{ins.type}</p>
                                         </div>
                                         <div className="mb-2">
-                                            <p style={{ color: 'rgba(255, 255, 255, 0.6)', fontSize: 'x-small', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '2px' }}>Policy ID</p>
+                                            <p style={{ color: 'rgba(255, 255, 255, 0.6)', fontSize: 'x-small', textTransform: 'uppercase', letterSpacing: '0.5px', margin: '0 0 2px 0' }}>Policy ID</p>
                                             <p className="fw-bold mb-0" style={{ color: '#c7d2fe', fontSize: 'small' }}>{ins.policy}</p>
                                         </div>
                                         <hr className="opacity-10" />
                                         <div className="d-flex justify-content-between">
                                             <div>
-                                                <p style={{ color: 'rgba(255, 255, 255, 0.6)', fontSize: 'x-small', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '2px' }}>Premium</p>
+                                                <p style={{ color: 'rgba(255, 255, 255, 0.6)', fontSize: 'x-small', textTransform: 'uppercase', letterSpacing: '0.5px', margin: '0 0 2px 0' }}>Premium</p>
                                                 <p className="fw-bold text-success mb-0" style={{ fontSize: 'small' }}>{ins.premium}</p>
                                             </div>
                                             <div className="text-end">
-                                                <p style={{ color: 'rgba(255, 255, 255, 0.6)', fontSize: 'x-small', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '2px' }}>Expires</p>
+                                                <p style={{ color: 'rgba(255, 255, 255, 0.6)', fontSize: 'x-small', textTransform: 'uppercase', letterSpacing: '0.5px', margin: '0 0 2px 0' }}>Expires</p>
                                                 <p className="fw-bold mb-0" style={{ color: '#f8fafc', fontSize: 'small' }}>{ins.expiry}</p>
                                             </div>
                                         </div>
@@ -270,6 +270,7 @@ const AdminUsers = ({ onLogout }) => {
                                 style={{ background: '#f8fafc' }}
                             >
                                 <option value="user">User</option>
+                                <option value="surveyor">Surveyor</option>
                                 <option value="officer">Officer</option>
                                 <option value="admin">Admin</option>
                             </Form.Select>

@@ -37,12 +37,15 @@ body {
 }
 
 .transition-hover {
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: transform 0.4s cubic-bezier(0.165, 0.84, 0.44, 1),
+        box-shadow 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+    will-change: transform, box-shadow;
 }
 
 .transition-hover:hover {
+    -webkit-transform: translateY(-8px);
     transform: translateY(-8px);
-    box-shadow: 0 1.5rem 4rem rgba(0, 0, 0, 0.12) !important;
+    box-shadow: 0 1.5rem 4rem rgba(0, 0, 0, 0.2) !important;
 }
 
 .btn-primary {
@@ -68,12 +71,17 @@ body {
     background: radial-gradient(circle at top right, rgba(13, 110, 253, 0.05), transparent);
 }
 
+/* Hero Section Shape Hardening */
 .hero-shape {
     position: absolute;
     z-index: -1;
     filter: blur(80px);
+    -webkit-filter: blur(80px);
+    /* Chrome prefix */
     border-radius: 50%;
     opacity: 0.4;
+    pointer-events: none;
+    will-change: transform, opacity;
 }
 
 .shape-1 {
@@ -95,13 +103,36 @@ body {
 
 /* Animations */
 
+.animate-up {
+    opacity: 0;
+    /* Important: start invisible so it can fade in */
+    will-change: transform, opacity;
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
+    -webkit-animation: fadeInUp 0.8s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+    animation: fadeInUp 0.8s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .animate-up {
+        -webkit-animation: none !important;
+        animation: none !important;
+        opacity: 1 !important;
+        -webkit-transform: none !important;
+        transform: none !important;
+    }
+}
+
 @keyframes fadeInUp {
     from {
         opacity: 0;
+        -webkit-transform: translateY(30px);
         transform: translateY(30px);
     }
+
     to {
         opacity: 1;
+        -webkit-transform: translateY(0);
         transform: translateY(0);
     }
 }
@@ -110,9 +141,11 @@ body {
     0% {
         transform: translateY(0px);
     }
+
     50% {
         transform: translateY(-20px);
     }
+
     100% {
         transform: translateY(0px);
     }
@@ -123,22 +156,16 @@ body {
         transform: scale(1);
         opacity: 0.4;
     }
+
     50% {
         transform: scale(1.1);
         opacity: 0.6;
     }
+
     100% {
         transform: scale(1);
         opacity: 0.4;
     }
-}
-
-.animate-up {
-    -webkit-animation: fadeInUp 0.8s cubic-bezier(0.4, 0, 0.2, 1) forwards;
-    animation: fadeInUp 0.8s cubic-bezier(0.4, 0, 0.2, 1) forwards;
-    -webkit-transform: translateZ(0);
-    transform: translateZ(0);
-    /* Hardware acceleration for Chrome */
 }
 
 .animate-float {
@@ -156,14 +183,17 @@ body {
 .hero-card-floating {
     position: absolute;
     padding: 1.5rem;
-    background: rgba(255, 255, 255, 0.9);
+    background: rgba(255, 255, 255, 0.08);
+    /* Adjusted for dark mode visibility */
     -webkit-backdrop-filter: blur(10px);
     backdrop-filter: blur(10px);
     border-radius: 1rem;
-    box-shadow: 0 1rem 3rem rgba(0, 0, 0, 0.1);
+    box-shadow: 0 1rem 3rem rgba(0, 0, 0, 0.2);
     z-index: 10;
-    border: 1px solid rgba(255, 255, 255, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    -webkit-animation: float 6s ease-in-out infinite;
     animation: float 6s ease-in-out infinite;
+    will-change: transform;
 }
 
 .hero-image-container {
@@ -207,6 +237,7 @@ body {
         transform: scale(0, 0);
         opacity: 0.5;
     }
+
     100% {
         transform: scale(40, 40);
         opacity: 0;
@@ -335,9 +366,11 @@ body {
     0% {
         transform: translateY(0px);
     }
+
     50% {
         transform: translateY(-15px);
     }
+
     100% {
         transform: translateY(0px);
     }
@@ -463,6 +496,21 @@ body.dark-mode .border {
     color: #fff;
 }
 
+.step-line {
+    flex-grow: 1;
+    height: 2px;
+    background-color: #dee2e6;
+    margin: 0 10px;
+    transition: all 0.3s ease;
+    max-width: 60px;
+    border-top: 2px dashed #dee2e6;
+    background: transparent;
+}
+
+.step-line.completed {
+    border-top-color: var(--primary-color);
+}
+
 .animate-fade-in {
     animation: fadeInUp 0.5s ease-out forwards;
 }
@@ -498,6 +546,7 @@ body.dark-mode .border {
         transform: scale(0);
         opacity: 0;
     }
+
     to {
         transform: scale(1);
         opacity: 1;
@@ -668,4 +717,84 @@ body.dark-mode .modal-header .btn-close {
 
 body.dark-mode .navbar.bg-dark {
     background-color: #1a1a1a !important;
+}
+
+
+/* Global Scroll to Top Button */
+
+.scroll-to-top {
+    position: fixed;
+    bottom: 30px;
+    right: 30px;
+    width: 45px;
+    height: 45px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #6366f1, #8b5cf6);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 2000;
+    border: none;
+    box-shadow: 0 8px 20px rgba(99, 102, 241, 0.3);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    opacity: 0;
+    transform: translateY(20px) scale(0.8);
+    pointer-events: none;
+}
+
+.scroll-to-top.visible {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    pointer-events: auto;
+}
+
+.scroll-to-top:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 12px 25px rgba(99, 102, 241, 0.4);
+    background: linear-gradient(135deg, #818cf8, #a78bfa);
+}
+
+.scroll-to-top:active {
+    transform: scale(0.95);
+}
+
+/* ── Vehicle Insurance Page – New Enhancements ───────────────────── */
+
+/* Animated stat counter card hover */
+.stat-counter-col {
+    transition: transform 0.25s ease;
+}
+
+.stat-counter-col:hover {
+    transform: translateY(-4px);
+}
+
+/* Coverage comparison table row hover */
+.coverage-table-row {
+    transition: background 0.2s ease;
+}
+
+.coverage-table-row:hover {
+    background: rgba(99, 102, 241, 0.06) !important;
+}
+
+/* Hero feature chips */
+.hero-chip {
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    animation: float 5s ease-in-out infinite;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Quick-action button in hero */
+.hero-action-btn:hover {
+    transform: translateY(-2px);
+    filter: brightness(1.1);
+}
+
+/* Compare plans table cell */
+.compare-check {
+    filter: drop-shadow(0 0 4px rgba(16, 185, 129, 0.5));
 }

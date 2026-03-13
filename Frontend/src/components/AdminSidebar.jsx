@@ -2,10 +2,10 @@ import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import {
     FaChartBar, FaUsers, FaFileInvoice, FaShieldAlt,
-    FaSignOutAlt, FaCog, FaTachometerAlt
+    FaSignOutAlt, FaCog, FaTachometerAlt, FaEnvelope
 } from 'react-icons/fa';
 
-const AdminSidebar = ({ onLogout }) => {
+const AdminSidebar = ({ onLogout, onNavigate }) => {
     const location = useLocation();
     const [hoveredItem, setHoveredItem] = useState(null);
 
@@ -14,6 +14,7 @@ const AdminSidebar = ({ onLogout }) => {
         { title: 'Users', path: '/admin/users', icon: <FaUsers /> },
         { title: 'Policies', path: '/admin/policies', icon: <FaShieldAlt /> },
         { title: 'Claims', path: '/admin/claims', icon: <FaFileInvoice /> },
+        { title: 'ContactUs', path: '/admin/contact', icon: <FaEnvelope /> },
         { title: 'Settings', path: '/admin/settings', icon: <FaCog /> },
     ];
 
@@ -186,6 +187,7 @@ const AdminSidebar = ({ onLogout }) => {
                 .sidebar-nav-item:nth-child(3) { animation: slideIn 0.3s ease 0.15s both; }
                 .sidebar-nav-item:nth-child(4) { animation: slideIn 0.3s ease 0.2s both; }
                 .sidebar-nav-item:nth-child(5) { animation: slideIn 0.3s ease 0.25s both; }
+                .sidebar-nav-item:nth-child(6) { animation: slideIn 0.3s ease 0.3s both; }
                 @keyframes slideIn {
                     from { opacity: 0; transform: translateX(-16px); }
                     to { opacity: 1; transform: translateX(0); }
@@ -212,6 +214,7 @@ const AdminSidebar = ({ onLogout }) => {
                             key={index}
                             to={item.path}
                             className={`sidebar-nav-item ${isActive(item.path) ? 'active' : ''} ${hoveredItem === index ? 'hovered' : ''}`}
+                            onClick={onNavigate}
                             onMouseEnter={() => setHoveredItem(index)}
                             onMouseLeave={() => setHoveredItem(null)}
                         >
@@ -224,7 +227,13 @@ const AdminSidebar = ({ onLogout }) => {
 
                 {/* Logout */}
                 <div className="sidebar-footer">
-                    <button className="sidebar-logout" onClick={onLogout}>
+                    <button
+                        className="sidebar-logout"
+                        onClick={() => {
+                            if (onNavigate) onNavigate();
+                            onLogout();
+                        }}
+                    >
                         <FaSignOutAlt className="item-icon" />
                         <span>Logout</span>
                     </button>

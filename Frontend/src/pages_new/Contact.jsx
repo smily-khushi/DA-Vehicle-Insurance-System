@@ -5,15 +5,43 @@ import { FaPhoneAlt, FaEnvelope, FaMapMarkerAlt, FaCheckCircle } from 'react-ico
 const Contact = () => {
     const [submitted, setSubmitted] = useState(false);
     const [loading, setLoading] = useState(false);
+    const [error, setError] = useState('');
+    const [formData, setFormData] = useState({
+        name: '',
+        email: '',
+        subject: '',
+        message: ''
+    });
 
-    const handleSubmit = (e) => {
+    const handleInputChange = (event) => {
+        const { name, value } = event.target;
+        setFormData((previous) => ({ ...previous, [name]: value }));
+    };
+
+    const handleSubmit = async(e) => {
         e.preventDefault();
         setLoading(true);
-        // Mock API call
-        setTimeout(() => {
-            setLoading(false);
+        setError('');
+
+        try {
+            const response = await fetch('http://localhost:5000/api/contact', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(formData)
+            });
+
+            if (!response.ok) {
+                const data = await response.json();
+                throw new Error(data.message || 'Failed to send message');
+            }
+
+            setFormData({ name: '', email: '', subject: '', message: '' });
             setSubmitted(true);
-        }, 1000);
+        } catch (submitError) {
+            setError(submitError.message || 'Unable to send message right now');
+        } finally {
+            setLoading(false);
+        }
     };
 
     if (submitted) {
@@ -79,27 +107,65 @@ const Contact = () => {
                         <Card.Body>
                             <h4 className="fw-bold mb-4">Send us a Message</h4>
                             <Form onSubmit={handleSubmit}>
+                                {error && (
+                                    <Alert variant="danger" className="rounded-3 py-2">
+                                        {error}
+                                    </Alert>
+                                )}
                                 <Row className="g-3 mb-3">
                                     <Col md={6}>
                                         <Form.Group controlId="formName">
                                             <Form.Label className="small fw-bold">Your Name</Form.Label>
-                                            <Form.Control type="text" placeholder="John Doe" className="bg-light border-0 py-2 rounded-3" required />
+                                            <Form.Control
+                                                type="text"
+                                                name="name"
+                                                placeholder="John Doe"
+                                                className="bg-light border-0 py-2 rounded-3"
+                                                value={formData.name}
+                                                onChange={handleInputChange}
+                                                required
+                                            />
                                         </Form.Group>
                                     </Col>
                                     <Col md={6}>
                                         <Form.Group controlId="formEmail">
                                             <Form.Label className="small fw-bold">Email Address</Form.Label>
-                                            <Form.Control type="email" placeholder="john@example.com" className="bg-light border-0 py-2 rounded-3" required />
+                                            <Form.Control
+                                                type="email"
+                                                name="email"
+                                                placeholder="john@example.com"
+                                                className="bg-light border-0 py-2 rounded-3"
+                                                value={formData.email}
+                                                onChange={handleInputChange}
+                                                required
+                                            />
                                         </Form.Group>
                                     </Col>
                                 </Row>
                                 <Form.Group className="mb-3" controlId="formSubject">
                                     <Form.Label className="small fw-bold">Subject</Form.Label>
-                                    <Form.Control type="text" placeholder="Inquiry about..." className="bg-light border-0 py-2 rounded-3" required />
+                                    <Form.Control
+                                        type="text"
+                                        name="subject"
+                                        placeholder="Inquiry about..."
+                                        className="bg-light border-0 py-2 rounded-3"
+                                        value={formData.subject}
+                                        onChange={handleInputChange}
+                                        required
+                                    />
                                 </Form.Group>
                                 <Form.Group className="mb-4" controlId="formMessage">
                                     <Form.Label className="small fw-bold">Message</Form.Label>
-                                    <Form.Control as="textarea" rows={4} placeholder="Tell us how we can help..." className="bg-light border-0 py-2 rounded-3" required />
+                                    <Form.Control
+                                        as="textarea"
+                                        rows={4}
+                                        name="message"
+                                        placeholder="Tell us how we can help..."
+                                        className="bg-light border-0 py-2 rounded-3"
+                                        value={formData.message}
+                                        onChange={handleInputChange}
+                                        required
+                                    />
                                 </Form.Group>
                                 <Button variant="primary" type="submit" className="w-100 py-3 rounded-pill fw-bold btn-dynamic shadow" disabled={loading}>
                                     {loading ? 'Sending...' : 'Send Message'}

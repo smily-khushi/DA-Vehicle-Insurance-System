@@ -1,17 +1,62 @@
 import React, { useState, useEffect } from 'react';
-import { Container, Row, Col, Card, Form, Button, Badge, Nav, Tab } from 'react-bootstrap';
-import { FaUser, FaLock, FaBell, FaGlobe, FaShieldAlt, FaSave, FaTrash, FaCheckCircle } from 'react-icons/fa';
+import { Container, Row, Col, Card, Form, Button, Badge, Nav, Tab, Alert } from 'react-bootstrap';
+import { FaUser, FaLock, FaGlobe, FaShieldAlt, FaSave, FaTrash, FaCheckCircle, FaCogs, FaToggleOn, FaToggleOff } from 'react-icons/fa';
 import AdminSidebar from '../../components/AdminSidebar';
 
 const AdminSettings = ({ onLogout }) => {
     const [visible, setVisible] = useState(false);
     const [activeTab, setActiveTab] = useState('profile');
     const [saveStatus, setSaveStatus] = useState(null);
+    const [passwordError, setPasswordError] = useState('');
+    const [systemStatus, setSystemStatus] = useState({ notifications: true, autoBackup: true, maintenanceMode: false });
+    const [passwordData, setPasswordData] = useState({ current: '', new: '', confirm: '' });
 
     useEffect(() => {
         const t = setTimeout(() => setVisible(true), 80);
         return () => clearTimeout(t);
     }, []);
+
+    const handlePasswordSubmit = async (e) => {
+        e.preventDefault();
+        setPasswordError('');
+
+        if (!passwordData.current || !passwordData.new || !passwordData.confirm) {
+            setPasswordError('All password fields are required');
+            return;
+        }
+
+        if (passwordData.new !== passwordData.confirm) {
+            setPasswordError('New passwords do not match');
+            return;
+        }
+
+        if (passwordData.new.length < 6) {
+            setPasswordError('Password must be at least 6 characters');
+            return;
+        }
+
+        setSaveStatus('saving');
+        try {
+            const response = await fetch('http://localhost:5000/api/auth/change-password', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ currentPassword: passwordData.current, newPassword: passwordData.new })
+            });
+
+            const result = await response.json();
+            if (response.ok) {
+                setSaveStatus('success');
+                setPasswordData({ current: '', new: '', confirm: '' });
+                setTimeout(() => setSaveStatus(null), 3000);
+            } else {
+                setPasswordError(result.message || 'Failed to update password');
+                setSaveStatus(null);
+            }
+        } catch (error) {
+            setPasswordError('Error updating password');
+            setSaveStatus(null);
+        }
+    };
 
     const handleSave = (e) => {
         e.preventDefault();
@@ -198,12 +243,6 @@ const AdminSettings = ({ onLogout }) => {
                         <div className={`settings-nav-item ${activeTab === 'security' ? 'active' : ''}`} onClick={() => setActiveTab('security')}>
                             <FaLock /> Security
                         </div>
-                        <div className={`settings-nav-item ${activeTab === 'notifications' ? 'active' : ''}`} onClick={() => setActiveTab('notifications')}>
-                            <FaBell /> Notifications
-                        </div>
-                        <div className={`settings-nav-item ${activeTab === 'system' ? 'active' : ''}`} onClick={() => setActiveTab('system')}>
-                            <FaGlobe /> System Config
-                        </div>
                     </div>
 
                     <div className="settings-content">
@@ -237,24 +276,43 @@ const AdminSettings = ({ onLogout }) => {
                         {activeTab === 'security' && (
                             <div className="settings-card shadow-lg animate-fade-in">
                                 <h2 className="settings-card-title"><FaLock className="text-warning" /> Security Settings</h2>
-                                <Form onSubmit={handleSave}>
+                                {passwordError && <Alert variant="danger" className="mb-3">{passwordError}</Alert>}
+                                <Form onSubmit={handlePasswordSubmit}>
                                     <div className="mb-4">
                                         <Form.Label className="settings-label">Current Password</Form.Label>
-                                        <Form.Control type="password" className="settings-input" placeholder="••••••••" />
+                                        <Form.Control 
+                                            type="password" 
+                                            className="settings-input" 
+                                            placeholder="••••••••"
+                                            value={passwordData.current}
+                                            onChange={(e) => setPasswordData({...passwordData, current: e.target.value})}
+                                        />
                                     </div>
                                     <Row>
                                         <Col md={6} className="mb-4">
                                             <Form.Label className="settings-label">New Password</Form.Label>
-                                            <Form.Control type="password" className="settings-input" placeholder="Enter new password" />
+                                            <Form.Control 
+                                                type="password" 
+                                                className="settings-input" 
+                                                placeholder="Enter new password"
+                                                value={passwordData.new}
+                                                onChange={(e) => setPasswordData({...passwordData, new: e.target.value})}
+                                            />
                                         </Col>
                                         <Col md={6} className="mb-4">
                                             <Form.Label className="settings-label">Confirm New Password</Form.Label>
-                                            <Form.Control type="password" className="settings-input" placeholder="Confirm new password" />
+                                            <Form.Control 
+                                                type="password" 
+                                                className="settings-input" 
+                                                placeholder="Confirm new password"
+                                                value={passwordData.confirm}
+                                                onChange={(e) => setPasswordData({...passwordData, confirm: e.target.value})}
+                                            />
                                         </Col>
                                     </Row>
                                     <div className="d-flex justify-content-end mb-4">
-                                        <Button type="submit" className="save-btn">
-                                            <FaLock /> Update Password
+                                        <Button type="submit" className="save-btn" disabled={saveStatus === 'saving'}>
+                                            {saveStatus === 'saving' ? 'Updating...' : saveStatus === 'success' ? <><FaCheckCircle /> Updated</> : <><FaLock /> Update Password</>}
                                         </Button>
                                     </div>
 
@@ -263,72 +321,6 @@ const AdminSettings = ({ onLogout }) => {
                                         <p className="text-secondary small mb-3">Proceed with caution. These actions cannot be undone.</p>
                                         <Button variant="outline-danger" className="d-flex align-items-center gap-2" style={{ borderRadius: '10px' }}>
                                             <FaTrash /> Deactivate Account
-                                        </Button>
-                                    </div>
-                                </Form>
-                            </div>
-                        )}
-
-                        {activeTab === 'notifications' && (
-                            <div className="settings-card shadow-lg animate-fade-in">
-                                <h2 className="settings-card-title"><FaBell className="text-info" /> Notification Preferences</h2>
-                                <Form onSubmit={handleSave}>
-                                    <div className="mb-4 p-3 rounded-4" style={{ background: 'rgba(255,255,255,0.02)' }}>
-                                        <Form.Check
-                                            type="switch"
-                                            id="new-claim-notify"
-                                            label="New Claim Notifications"
-                                            defaultChecked
-                                            className="text-white mb-2"
-                                        />
-                                        <Form.Check
-                                            type="switch"
-                                            id="user-reg-notify"
-                                            label="User Registration Alerts"
-                                            defaultChecked
-                                            className="text-white mb-2"
-                                        />
-                                        <Form.Check
-                                            type="switch"
-                                            id="system-health-notify"
-                                            label="System Health Reports"
-                                            className="text-white"
-                                        />
-                                    </div>
-                                    <div className="d-flex justify-content-end">
-                                        <Button type="submit" className="save-btn">
-                                            <FaSave /> Save Preferences
-                                        </Button>
-                                    </div>
-                                </Form>
-                            </div>
-                        )}
-
-                        {activeTab === 'system' && (
-                            <div className="settings-card shadow-lg animate-fade-in">
-                                <h2 className="settings-card-title"><FaGlobe className="text-secondary" /> System Configuration</h2>
-                                <Form onSubmit={handleSave}>
-                                    <Row>
-                                        <Col md={6} className="mb-4">
-                                            <Form.Label className="settings-label">System Environment</Form.Label>
-                                            <Form.Select className="settings-input">
-                                                <option>Production (Live)</option>
-                                                <option>Staging</option>
-                                                <option>Development</option>
-                                            </Form.Select>
-                                        </Col>
-                                        <Col md={6} className="mb-4">
-                                            <Form.Label className="settings-label">Backup Frequency</Form.Label>
-                                            <Form.Select className="settings-input">
-                                                <option>Daily</option>
-                                                <option>Weekly</option>
-                                                <option>Monthly</option>
-                                            </Form.Select>
-                                        </Col>
-                                    </Row>
-                                    <div className="d-flex justify-content-end">
-                                        <Button type="submit" className="save-btn">
-                                            <FaSave /> Update Config
                                         </Button>
                                     </div>
                                 </Form>

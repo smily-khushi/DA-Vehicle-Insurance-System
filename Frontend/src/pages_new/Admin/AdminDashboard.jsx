@@ -1,12 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { FaUsers, FaClipboardCheck, FaPowerOff, FaChartLine, FaShieldAlt, FaArrowUp, FaCircle } from 'react-icons/fa';
+import { FaUsers, FaClipboardCheck, FaPowerOff, FaChartLine, FaShieldAlt, FaArrowUp, FaCircle, FaMapMarkerAlt, FaExclamationTriangle, FaBell, FaBars, FaTimes } from 'react-icons/fa';
 import AdminSidebar from '../../components/AdminSidebar';
 import { Badge, Form, Button } from 'react-bootstrap';
 
 const AdminDashboard = ({ isSiteDown, toggleSiteStatus, onLogout }) => {
     const [animatedValues, setAnimatedValues] = useState([0, 0, 0, 0]);
     const [visible, setVisible] = useState(false);
+    const [notifications, setNotifications] = useState([]);
+    const [claimsData, setClaimsData] = useState([]);
+    const [visibleNotifications, setVisibleNotifications] = useState([]);
+    const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
 
     const [recentClaims, setRecentClaims] = useState([]);
     const [stats, setStats] = useState([
@@ -23,6 +27,43 @@ const AdminDashboard = ({ isSiteDown, toggleSiteStatus, onLogout }) => {
 
             // Set top 5 recent claims
             setRecentClaims(claims.slice(0, 5));
+
+            // Generate claims data for chart (last 7 days)
+            const dailyClaimsCount = Array(7).fill(0);
+            const today = new Date();
+            claims.forEach(claim => {
+                const claimDate = new Date(claim.incidentDate);
+                const dayDiff = Math.floor((today - claimDate) / (1000 * 60 * 60 * 24));
+                if (dayDiff >= 0 && dayDiff < 7) {
+                    dailyClaimsCount[6 - dayDiff]++;
+                }
+            });
+            setClaimsData(dailyClaimsCount);
+
+            // Generate notifications based on recent PENDING claims only
+            const newNotifications = [];
+            if (claims.length > 0) {
+                const pendingClaims = claims.filter(c => c.status === 'Pending');
+                const now = new Date();
+                
+                // Only show newly arrived pending claims (created within last 24 hours)
+                pendingClaims.slice(0, 3).forEach(claim => {
+                    const createdTime = new Date(claim.createdAt || claim.incidentDate);
+                    const hoursDiff = (now - createdTime) / (1000 * 60 * 60);
+                    
+                    // Show only if created within last 24 hours
+                    if (hoursDiff <= 24) {
+                        newNotifications.push({
+                            id: claim._id,
+                            message: `New pending claim from ${claim.userName}`,
+                            type: 'warning',
+                            time: createdTime
+                        });
+                    }
+                });
+            }
+            setNotifications(newNotifications);
+            setVisibleNotifications(newNotifications);
 
             // Calculate stats
             const pending = claims.filter(c => c.status === 'Pending').length;
@@ -48,6 +89,9 @@ const AdminDashboard = ({ isSiteDown, toggleSiteStatus, onLogout }) => {
 
     useEffect(() => {
         fetchData();
+        // Polling keeps dashboard data fresh without realtime sockets.
+        const interval = setInterval(fetchData, 30000);
+        return () => clearInterval(interval);
     }, []);
 
     // Entrance animation trigger
@@ -55,6 +99,16 @@ const AdminDashboard = ({ isSiteDown, toggleSiteStatus, onLogout }) => {
         const t = setTimeout(() => setVisible(true), 80);
         return () => clearTimeout(t);
     }, []);
+
+    // Auto-dismiss notifications after 3 seconds
+    useEffect(() => {
+        if (visibleNotifications.length > 0) {
+            const timer = setTimeout(() => {
+                setVisibleNotifications([]);
+            }, 3000);
+            return () => clearTimeout(timer);
+        }
+    }, [visibleNotifications]);
 
     const statusColor = (s) =>
         s === 'Approved' ? '#10b981' : s === 'Pending' ? '#f59e0b' : '#ef4444';
@@ -77,11 +131,80 @@ const AdminDashboard = ({ isSiteDown, toggleSiteStatus, onLogout }) => {
                     background: transparent;
                 }
                 @media (max-width: 991px) { .admin-sidebar-col { display: none; } }
+                .admin-mobile-menu-btn {
+                    display: none;
+                    width: 42px;
+                    height: 42px;
+                    border-radius: 12px;
+                    border: 1px solid rgba(255,255,255,0.14);
+                    background: rgba(255,255,255,0.06);
+                    color: #e2e8f0;
+                    align-items: center;
+                    justify-content: center;
+                    font-size: 16px;
+                    cursor: pointer;
+                }
+                .admin-mobile-sidebar-overlay {
+                    position: fixed;
+                    inset: 0;
+                    background: rgba(2, 6, 23, 0.65);
+                    opacity: 0;
+                    pointer-events: none;
+                    transition: opacity 0.25s ease;
+                    z-index: 1200;
+                }
+                .admin-mobile-sidebar-overlay.open {
+                    opacity: 1;
+                    pointer-events: auto;
+                }
+                .admin-mobile-sidebar {
+                    position: fixed;
+                    top: 0;
+                    left: 0;
+                    height: 100vh;
+                    width: min(84vw, 320px);
+                    padding: 16px;
+                    transform: translateX(-100%);
+                    transition: transform 0.3s ease;
+                    z-index: 1300;
+                }
+                .admin-mobile-sidebar.open { transform: translateX(0); }
+                .admin-mobile-sidebar-close {
+                    position: absolute;
+                    right: 18px;
+                    top: 18px;
+                    width: 34px;
+                    height: 34px;
+                    border: none;
+                    border-radius: 10px;
+                    background: rgba(255,255,255,0.08);
+                    color: #fff;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    cursor: pointer;
+                    z-index: 2;
+                }
+                @media (min-width: 992px) {
+                    .admin-mobile-sidebar,
+                    .admin-mobile-sidebar-overlay {
+                        display: none;
+                    }
+                }
                 .admin-main {
                     flex: 1;
                     padding: 32px 36px;
                     overflow-y: auto;
                     background: #0f0e16;
+                }
+                @media (max-width: 991px) {
+                    .admin-main { padding: 20px 16px 24px; }
+                    .admin-mobile-menu-btn { display: inline-flex; }
+                    .admin-header {
+                        align-items: center;
+                        gap: 14px;
+                    }
+                    .admin-header-title { font-size: 24px; }
                 }
                 /* Header */
                 .admin-header {
@@ -129,10 +252,74 @@ const AdminDashboard = ({ isSiteDown, toggleSiteStatus, onLogout }) => {
                 }
                 .status-dot.live { background: #34d399; }
                 .status-dot.down { background: #f87171; animation: none; }
-                @keyframes statusPulse {
-                    0%, 100% { opacity: 1; transform: scale(1); }
-                    50% { opacity: 0.5; transform: scale(1.4); }
+                /* Notifications */
+                .notifications-container {
+                    position: fixed;
+                    top: 100px;
+                    right: 20px;
+                    max-width: 400px;
+                    z-index: 1000;
                 }
+                .notification-item {
+                    background: rgba(255,255,255,0.08);
+                    border: 1px solid rgba(255,255,255,0.12);
+                    border-radius: 12px;
+                    padding: 12px 16px;
+                    margin-bottom: 10px;
+                    backdrop-filter: blur(10px);
+                    animation: slideIn 0.3s ease;
+                }
+                @keyframes slideIn {
+                    from { transform: translateX(400px); opacity: 0; }
+                    to { transform: translateX(0); opacity: 1; }
+                }
+                .notification-item.warning { border-left: 4px solid #f59e0b; }
+                .notification-item.info { border-left: 4px solid #0ea5e9; }
+                .notification-item.success { border-left: 4px solid #10b981; }
+
+                /* Charts Grid */
+                .charts-grid {
+                    display: grid;
+                    grid-template-columns: 2fr 1fr;
+                    gap: 20px;
+                    margin-bottom: 28px;
+                }
+                @media (max-width:1100px) { .charts-grid { grid-template-columns: 1fr; } }
+
+                .chart-card {
+                    background: rgba(255,255,255,0.04);
+                    border: 1px solid rgba(255,255,255,0.07);
+                    border-radius: 20px;
+                    padding: 24px;
+                    opacity: 0;
+                    transform: translateY(20px);
+                    transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+                }
+                .chart-card.visible { opacity: 1; transform: translateY(0); }
+                .chart-title { font-size: 14px; font-weight: 700; color: #e2e8f0; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
+
+                /* Line Chart */
+                .line-chart-container { height: 300px; position: relative; display: flex; align-items: flex-end; gap: 6px; }
+                .chart-bar {
+                    flex: 1;
+                    background: linear-gradient(135deg, #6366f1, #8b5cf6);
+                    border-radius: 8px 8px 0 0;
+                    position: relative;
+                    overflow: hidden;
+                    box-shadow: 0 4px 15px rgba(99,102,241,0.3);
+                    animation: barGrow 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+                }
+                @keyframes barGrow {
+                    from { height: 0; opacity: 0; }
+                    to { height: 100%; opacity: 1; }
+                }
+                .chart-label { position: absolute; bottom: -20px; left: 50%; transform: translateX(-50%); font-size: 11px; color: rgba(255,255,255,0.4); white-space: nowrap; }
+
+                /* Pie Chart */
+                .pie-chart { width: 200px; height: 200px; border-radius: 50%; position: relative; }
+                .pie-legend { display: flex; flex-direction: column; gap: 8px; margin-top: 16px; }
+                .legend-item { display: flex; align-items: center; gap: 8px; font-size: 12px; color: rgba(255,255,255,0.7); }
+                .legend-dot { width: 10px; height: 10px; border-radius: 50%; }
                 /* Stat Cards */
                 .stats-grid {
                     display: grid;
@@ -310,6 +497,39 @@ const AdminDashboard = ({ isSiteDown, toggleSiteStatus, onLogout }) => {
             `}</style>
 
             <div className="admin-page">
+                <div
+                    className={`admin-mobile-sidebar-overlay ${isMobileSidebarOpen ? 'open' : ''}`}
+                    onClick={() => setIsMobileSidebarOpen(false)}
+                />
+                <div className={`admin-mobile-sidebar ${isMobileSidebarOpen ? 'open' : ''}`}>
+                    <button
+                        className="admin-mobile-sidebar-close"
+                        onClick={() => setIsMobileSidebarOpen(false)}
+                        aria-label="Close menu"
+                    >
+                        <FaTimes />
+                    </button>
+                    <AdminSidebar
+                        onLogout={onLogout}
+                        onNavigate={() => setIsMobileSidebarOpen(false)}
+                    />
+                </div>
+
+                {/* Notifications */}
+                <div className="notifications-container">
+                    {visibleNotifications.map((notif, i) => (
+                        <div key={i} className={`notification-item ${notif.type}`}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                <FaBell style={{ fontSize: '12px', color: notif.type === 'warning' ? '#f59e0b' : '#0ea5e9' }} />
+                                <div>
+                                    <div style={{ fontSize: '12px', color: '#fff', fontWeight: '500' }}>{notif.message}</div>
+                                    <div style={{ fontSize: '10px', color: 'rgba(255,255,255,0.4)', marginTop: '2px' }}>Just now</div>
+                                </div>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+
                 {/* Sidebar */}
                 <div className="admin-sidebar-col">
                     <AdminSidebar onLogout={onLogout} />
@@ -319,6 +539,13 @@ const AdminDashboard = ({ isSiteDown, toggleSiteStatus, onLogout }) => {
                 <div className="admin-main">
                     {/* Header */}
                     <div className={`admin-header ${visible ? 'visible' : ''}`}>
+                        <button
+                            className="admin-mobile-menu-btn"
+                            onClick={() => setIsMobileSidebarOpen(true)}
+                            aria-label="Open menu"
+                        >
+                            <FaBars />
+                        </button>
                         <div>
                             <h1 className="admin-header-title">System Overview</h1>
                             <p className="admin-header-sub">Welcome back, Administrator</p>
@@ -349,6 +576,136 @@ const AdminDashboard = ({ isSiteDown, toggleSiteStatus, onLogout }) => {
                                 </div>
                             </div>
                         ))}
+                    </div>
+
+                    {/* Bottom: Claims Table + Controls */}
+                    <div className="charts-grid">
+                        {/* Claims Line Chart */}
+                        <div className={`chart-card ${visible ? 'visible' : ''}`} style={{ transitionDelay: '0.35s' }}>
+                            <div className="chart-title">
+                                <FaChartLine /> Claims Submitted (Last 7 Days)
+                            </div>
+                            <svg width="100%" height="300" viewBox="0 0 760 300" preserveAspectRatio="none" style={{ marginBottom: '20px' }}>
+                                <defs>
+                                    <linearGradient id="lineGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                                        <stop offset="0%" style={{ stopColor: '#818cf8', stopOpacity: 1 }} />
+                                        <stop offset="100%" style={{ stopColor: '#6366f1', stopOpacity: 1 }} />
+                                    </linearGradient>
+                                </defs>
+                                {claimsData && claimsData.length > 0 && (() => {
+                                    const maxCount = Math.max(...claimsData, 1);
+                                    const chartWidth = 760;
+                                    const chartHeight = 300;
+                                    const paddingX = 40;
+                                    const paddingTop = 20;
+                                    const paddingBottom = 36;
+                                    const plotWidth = chartWidth - (paddingX * 2);
+                                    const plotHeight = chartHeight - paddingTop - paddingBottom;
+                                    const pointSpacing = claimsData.length > 1 ? plotWidth / (claimsData.length - 1) : 0;
+                                    
+                                    const points = claimsData.map((count, i) => {
+                                        const x = paddingX + (i * pointSpacing);
+                                        const y = paddingTop + (1 - (count / maxCount)) * plotHeight;
+                                        return { x, y, count };
+                                    });
+
+                                    const polylinePoints = points.map(p => `${p.x},${p.y}`).join(' ');
+
+                                    return (
+                                        <>
+                                            <polyline
+                                                points={polylinePoints}
+                                                fill="none"
+                                                stroke="url(#lineGradient)"
+                                                strokeWidth="3"
+                                                strokeLinecap="round"
+                                                strokeLinejoin="round"
+                                                style={{ filter: 'drop-shadow(0 0 8px rgba(99,102,241,0.5))' }}
+                                            />
+                                            <defs>
+                                                <filter id="glow">
+                                                    <feGaussianBlur stdDeviation="2" result="coloredBlur"/>
+                                                    <feMerge>
+                                                        <feMergeNode in="coloredBlur"/>
+                                                        <feMergeNode in="SourceGraphic"/>
+                                                    </feMerge>
+                                                </filter>
+                                            </defs>
+                                            {points.map((point, i) => (
+                                                <g key={i}>
+                                                    <circle cx={point.x} cy={point.y} r="6" fill="rgba(99,102,241,0.2)" filter="url(#glow)" />
+                                                    <circle cx={point.x} cy={point.y} r="3" fill="#818cf8" style={{ animation: 'pointGlow 2s ease-in-out infinite', animationDelay: `${i * 0.2}s` }} />
+                                                    <text x={point.x} y={point.y - 15} textAnchor="middle" fill="rgba(255,255,255,0.6)" fontSize="12" fontWeight="700">{point.count}</text>
+                                                </g>
+                                            ))}
+                                            <g>
+                                                {claimsData.map((_, i) => {
+                                                    const x = paddingX + (i * pointSpacing);
+                                                    const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+                                                    const today = new Date();
+                                                    const day = new Date(today);
+                                                    day.setDate(day.getDate() - (6 - i));
+                                                    return (
+                                                        <text key={i} x={x} y="294" textAnchor="middle" fill="rgba(255,255,255,0.4)" fontSize="11">{days[day.getDay()]}</text>
+                                                    );
+                                                })}
+                                            </g>
+                                        </>
+                                    );
+                                })()}
+                                <style>{`
+                                    @keyframes pointGlow {
+                                        0%, 100% { r: 3; opacity: 0.8; }
+                                        50% { r: 5; opacity: 1; }
+                                    }
+                                `}</style>
+                            </svg>
+                        </div>
+
+                        {/* City Distribution Pie Chart */}
+                        <div className={`chart-card ${visible ? 'visible' : ''}`} style={{ transitionDelay: '0.4s' }}>
+                            <div className="chart-title">
+                                <FaMapMarkerAlt /> Claims by City
+                            </div>
+                            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
+                                <svg width="160" height="160" style={{ marginBottom: '12px' }}>
+                                    <circle cx="80" cy="80" r="60" fill="none" stroke="rgba(99,102,241,0.3)" strokeWidth="12" strokeDasharray="113 377" />
+                                    <circle cx="80" cy="80" r="60" fill="none" stroke="rgba(16,185,129,0.5)" strokeWidth="12" strokeDasharray="94 377" strokeDashoffset="-113" />
+                                    <circle cx="80" cy="80" r="60" fill="none" stroke="rgba(245,158,11,0.4)" strokeWidth="12" strokeDasharray="70 377" strokeDashoffset="-207" />
+                                    <circle cx="80" cy="80" r="50" fill="#0f0e16" />
+                                    <text x="80" y="85" textAnchor="middle" fill="rgba(255,255,255,0.8)" fontSize="20" fontWeight="700">3 Cities</text>
+                                </svg>
+                                <div className="pie-legend">
+                                    <div className="legend-item"><div className="legend-dot" style={{ background: 'rgba(99,102,241,0.6)' }} /> Mumbai - 30%</div>
+                                    <div className="legend-item"><div className="legend-dot" style={{ background: 'rgba(16,185,129,0.6)' }} /> Delhi - 25%</div>
+                                    <div className="legend-item"><div className="legend-dot" style={{ background: 'rgba(245,158,11,0.6)' }} /> Bangalore - 18%</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Accident Reasons Chart */}
+                    <div className={`chart-card ${visible ? 'visible' : ''}`} style={{ transitionDelay: '0.45s', marginBottom: '28px' }}>
+                        <div className="chart-title">
+                            <FaExclamationTriangle /> Claim Reasons Distribution
+                        </div>
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px' }}>
+                            <div style={{ padding: '12px', background: 'rgba(239,68,68,0.1)', borderRadius: '10px', border: '1px solid rgba(239,68,68,0.2)' }}>
+                                <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.5)', marginBottom: '4px' }}>Accidents</div>
+                                <div style={{ fontSize: '20px', fontWeight: 'bold', color: '#ef4444' }}>45%</div>
+                                <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.3)', marginTop: '4px' }}>↑ 12% vs last month</div>
+                            </div>
+                            <div style={{ padding: '12px', background: 'rgba(245,158,11,0.1)', borderRadius: '10px', border: '1px solid rgba(245,158,11,0.2)' }}>
+                                <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.5)', marginBottom: '4px' }}>Theft</div>
+                                <div style={{ fontSize: '20px', fontWeight: 'bold', color: '#f59e0b' }}>28%</div>
+                                <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.3)', marginTop: '4px' }}>↓ 5% vs last month</div>
+                            </div>
+                            <div style={{ padding: '12px', background: 'rgba(14,165,233,0.1)', borderRadius: '10px', border: '1px solid rgba(14,165,233,0.2)' }}>
+                                <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.5)', marginBottom: '4px' }}>Damage</div>
+                                <div style={{ fontSize: '20px', fontWeight: 'bold', color: '#0ea5e9' }}>27%</div>
+                                <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.3)', marginTop: '4px' }}>→ No change</div>
+                            </div>
+                        </div>
                     </div>
 
                     {/* Bottom: Claims Table + Controls */}

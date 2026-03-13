@@ -25,9 +25,11 @@ const AdminClaimDetails = ({ onLogout }) => {
 
     React.useEffect(() => {
         fetchClaimDetails();
+        const interval = setInterval(fetchClaimDetails, 30000);
+        return () => clearInterval(interval);
     }, [id]);
 
-    const handleDownload = async (filename) => {
+    const handleDownload = async (filename, descriptiveName = 'Document') => {
         if (!filename) return;
         try {
             const response = await fetch(`http://localhost:5000/uploads/${filename}`);
@@ -35,7 +37,13 @@ const AdminClaimDetails = ({ onLogout }) => {
             const url = window.URL.createObjectURL(blob);
             const link = document.createElement('a');
             link.href = url;
-            link.setAttribute('download', filename);
+
+            // Format: YYYY-MM-DD_DescriptiveName.extension
+            const dateStr = new Date().toISOString().split('T')[0];
+            const extension = filename.split('.').pop();
+            const newFilename = `${dateStr}_${descriptiveName}.${extension}`;
+
+            link.setAttribute('download', newFilename);
             document.body.appendChild(link);
             link.click();
             link.parentNode.removeChild(link);
@@ -67,6 +75,9 @@ const AdminClaimDetails = ({ onLogout }) => {
     }
     if (claimData.repairEstimate) {
         documents.push({ name: 'Repair Cost Estimate', file: claimData.repairEstimate, type: 'Estimate' });
+    }
+    if (claimData.firDocument) {
+        documents.push({ name: 'FIR Document', file: claimData.firDocument, type: 'FIR' });
     }
 
     const handleStatusUpdate = async (newStatus) => {
@@ -163,7 +174,7 @@ const AdminClaimDetails = ({ onLogout }) => {
                                         {documents.map((doc, index) => (
                                             <tr key={index} className="align-middle bg-transparent" style={{ borderColor: 'rgba(255, 255, 255, 0.04)', background: 'transparent' }}>
                                                 <td className="py-3 fw-medium bg-transparent" style={{ color: '#f8fafc' }}>
-                                                    {doc.type === 'Policy' ? <FaShieldAlt className="text-primary me-2" /> : <FaFileInvoice className="text-success me-2" />}
+                                                    {doc.type === 'Policy' ? <FaShieldAlt className="text-primary me-2" /> : doc.type === 'FIR' ? <FaFilePdf className="text-danger me-2" /> : <FaFileInvoice className="text-success me-2" />}
                                                     {doc.name}
                                                 </td>
                                                 <td className="py-3 bg-transparent" style={{ color: 'rgba(255, 255, 255, 0.7)', fontSize: 'small' }}>PDF</td>
@@ -171,7 +182,7 @@ const AdminClaimDetails = ({ onLogout }) => {
                                                     <Badge bg="secondary" className="text-white border-0 fw-normal small" style={{ background: 'rgba(255, 255, 255, 0.15)' }}>{doc.type}</Badge>
                                                 </td>
                                                 <td className="py-3 text-end bg-transparent">
-                                                    <Button variant="link" className="text-primary p-0 text-decoration-none fw-bold small" onClick={() => handleDownload(doc.file)}>
+                                                    <Button variant="link" className="text-primary p-0 text-decoration-none fw-bold small" onClick={() => handleDownload(doc.file, doc.type === 'Policy' ? 'PolicyCopy' : doc.type === 'FIR' ? 'FIR_Copy' : 'repair_cost')}>
                                                         <FaDownload className="me-1" /> View/Download
                                                     </Button>
                                                 </td>
@@ -227,6 +238,30 @@ const AdminClaimDetails = ({ onLogout }) => {
                                         <p style={{ color: 'rgba(255, 255, 255, 0.6)', fontSize: 'x-small', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '4px' }}>Policy Link</p>
                                         <p className="fw-bold mb-0" style={{ color: '#c7d2fe' }}>{claimData.policyNumber}</p>
                                     </div>
+                                </div>
+                            </Card.Body>
+                        </Card>
+
+                        <Card style={{ background: 'rgba(255, 255, 255, 0.04)', border: '1px solid rgba(255, 255, 255, 0.07)' }} className="shadow-sm rounded-4 p-2 mt-4">
+                            <Card.Body>
+                                <h5 className="fw-bold mb-4 d-flex align-items-center" style={{ color: '#f8fafc' }}>
+                                    <FaClock className="text-primary me-2" /> Officer Processing
+                                </h5>
+                                <div className="mb-3">
+                                    <p style={{ color: 'rgba(255, 255, 255, 0.6)', fontSize: 'x-small', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '4px' }}>Processed By</p>
+                                    <p className="fw-bold mb-0" style={{ color: '#f8fafc' }}>{claimData.processingOfficer || 'Not processed yet'}</p>
+                                </div>
+                                <div className="mb-3">
+                                    <p style={{ color: 'rgba(255, 255, 255, 0.6)', fontSize: 'x-small', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '4px' }}>Processed At</p>
+                                    <p className="fw-bold mb-0" style={{ color: '#f8fafc' }}>
+                                        {claimData.processedAt ? new Date(claimData.processedAt).toLocaleString() : 'Pending'}
+                                    </p>
+                                </div>
+                                <div>
+                                    <p style={{ color: 'rgba(255, 255, 255, 0.6)', fontSize: 'x-small', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '4px' }}>Officer Comment</p>
+                                    <p style={{ color: 'rgba(255, 255, 255, 0.85)', marginBottom: 0 }}>
+                                        {claimData.officerComment?.trim() ? claimData.officerComment : 'No comment provided'}
+                                    </p>
                                 </div>
                             </Card.Body>
                         </Card>

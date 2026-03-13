@@ -21,14 +21,20 @@ const AdminClaimsList = ({ onLogout }) => {
         }
     };
 
-    const handleDownload = async (filename) => {
+    const handleDownload = async (filename, descriptiveName = 'Document') => {
         try {
             const response = await fetch(`http://localhost:5000/uploads/${filename}`);
             const blob = await response.blob();
             const url = window.URL.createObjectURL(blob);
             const link = document.createElement('a');
             link.href = url;
-            link.setAttribute('download', filename);
+
+            // Format: YYYY-MM-DD_DescriptiveName.extension
+            const dateStr = new Date().toISOString().split('T')[0];
+            const extension = filename.split('.').pop();
+            const newFilename = `${dateStr}_${descriptiveName}.${extension}`;
+
+            link.setAttribute('download', newFilename);
             document.body.appendChild(link);
             link.click();
             link.parentNode.removeChild(link);
@@ -41,6 +47,8 @@ const AdminClaimsList = ({ onLogout }) => {
 
     React.useEffect(() => {
         fetchClaims();
+        const interval = setInterval(fetchClaims, 30000);
+        return () => clearInterval(interval);
     }, []);
 
     const getStatusBadge = (status) => {
@@ -100,6 +108,7 @@ const AdminClaimsList = ({ onLogout }) => {
                                     <th className="py-3 border-0" style={{ color: 'rgba(255, 255, 255, 0.7)', fontSize: '11px', textTransform: 'uppercase', letterSpacing: '1px' }}>Customer</th>
                                     <th className="py-3 border-0" style={{ color: 'rgba(255, 255, 255, 0.7)', fontSize: '11px', textTransform: 'uppercase', letterSpacing: '1px' }}>Vehicle Details</th>
                                     <th className="py-3 border-0" style={{ color: 'rgba(255, 255, 255, 0.7)', fontSize: '11px', textTransform: 'uppercase', letterSpacing: '1px' }}>Status</th>
+                                    <th className="py-3 border-0" style={{ color: 'rgba(255, 255, 255, 0.7)', fontSize: '11px', textTransform: 'uppercase', letterSpacing: '1px' }}>Officer Decision</th>
                                     <th className="py-3 border-0" style={{ color: 'rgba(255, 255, 255, 0.7)', fontSize: '11px', textTransform: 'uppercase', letterSpacing: '1px' }}>Submission Date</th>
                                     <th className="px-4 py-3 border-0 text-end" style={{ color: 'rgba(255, 255, 255, 0.7)', fontSize: '11px', textTransform: 'uppercase', letterSpacing: '1px' }}>Actions</th>
                                 </tr>
@@ -129,7 +138,7 @@ const AdminClaimsList = ({ onLogout }) => {
                                                             bg="info-subtle"
                                                             className="text-info border-0 py-1 px-2 cursor-pointer d-flex align-items-center transition-hover"
                                                             style={{ fontSize: '10px', background: 'rgba(13, 202, 240, 0.1)', cursor: 'pointer' }}
-                                                            onClick={() => handleDownload(claim.policyDocument)}
+                                                            onClick={() => handleDownload(claim.policyDocument, 'PolicyCopy')}
                                                         >
                                                             <FaShieldAlt className="me-1" /> Policy <FaDownload className="ms-1 small" size={8} />
                                                         </Badge>
@@ -141,15 +150,41 @@ const AdminClaimsList = ({ onLogout }) => {
                                                             bg="success-subtle"
                                                             className="text-success border-0 py-1 px-2 cursor-pointer d-flex align-items-center transition-hover"
                                                             style={{ fontSize: '10px', background: 'rgba(25, 135, 84, 0.1)', cursor: 'pointer' }}
-                                                            onClick={() => handleDownload(claim.repairEstimate)}
+                                                            onClick={() => handleDownload(claim.repairEstimate, 'repair_cost')}
                                                         >
                                                             <FaFileInvoice className="me-1" /> Estimate <FaDownload className="ms-1 small" size={8} />
+                                                        </Badge>
+                                                    </div>
+                                                )}
+                                                {claim.firDocument && (
+                                                    <div className="d-flex align-items-center gap-2">
+                                                        <Badge
+                                                            bg="danger-subtle"
+                                                            className="text-danger border-0 py-1 px-2 cursor-pointer d-flex align-items-center transition-hover"
+                                                            style={{ fontSize: '10px', background: 'rgba(220, 53, 69, 0.1)', cursor: 'pointer' }}
+                                                            onClick={() => handleDownload(claim.firDocument, 'FIR_Copy')}
+                                                        >
+                                                            <FaFilePdf className="me-1" /> FIR <FaDownload className="ms-1 small" size={8} />
                                                         </Badge>
                                                     </div>
                                                 )}
                                             </div>
                                         </td>
                                         <td className="py-4 bg-transparent">{getStatusBadge(claim.status)}</td>
+                                        <td className="py-4 bg-transparent" style={{ minWidth: '220px' }}>
+                                            {claim.status === 'Pending' ? (
+                                                <span style={{ color: 'rgba(255, 255, 255, 0.5)', fontSize: '12px' }}>Awaiting officer review</span>
+                                            ) : (
+                                                <div>
+                                                    <div style={{ color: '#f8fafc', fontWeight: 600, fontSize: '13px' }}>
+                                                        {claim.processingOfficer || 'Officer'}
+                                                    </div>
+                                                    <div style={{ color: 'rgba(255, 255, 255, 0.65)', fontSize: '12px', marginTop: '2px' }}>
+                                                        {claim.officerComment?.trim() ? claim.officerComment : 'No comment provided'}
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </td>
                                         <td className="py-4 bg-transparent" style={{ color: 'rgba(255, 255, 255, 0.7)', fontSize: 'small' }}>{new Date(claim.incidentDate).toLocaleDateString()}</td>
                                         <td className="px-4 py-4 text-end bg-transparent">
                                             <Button
@@ -166,7 +201,7 @@ const AdminClaimsList = ({ onLogout }) => {
                                 ))}
                                 {claims.length === 0 && !loading && (
                                     <tr>
-                                        <td colSpan="6" className="text-center py-5 text-muted">No claims found.</td>
+                                        <td colSpan="7" className="text-center py-5 text-muted">No claims found.</td>
                                     </tr>
                                 )}
                             </tbody>

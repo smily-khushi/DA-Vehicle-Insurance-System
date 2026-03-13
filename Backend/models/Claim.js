@@ -43,6 +43,46 @@ const claimSchema = new mongoose.Schema({
     },
     repairEstimate: {
         type: String
+    },
+    firDocument: {
+        type: String
+    },
+    officerComment: {
+        type: String,
+        default: null
+    },
+    processingOfficer: {
+        type: String,
+        default: null
+    },
+    processedAt: {
+        type: Date,
+        default: null
+    },
+    surveyorEmail: {
+        type: String,
+        default: null
+    },
+    surveyorName: {
+        type: String,
+        default: null
+    },
+    surveyStatus: {
+        type: String,
+        enum: ['Pending', 'In Progress', 'Completed'],
+        default: 'Pending'
+    },
+    surveyReport: {
+        type: String,
+        default: null
+    },
+    surveyDocument: {
+        type: String,
+        default: null
+    },
+    surveyAmount: {
+        type: Number,
+        default: 0
     }
 }, { timestamps: true });
 
